@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext';
 import ProductGrid from '../components/ProductGrid';
 import { isAllowedEmail } from '../lib/validators';
 import { useState } from 'react';
+import { enviarSuscripcion } from '../lib/email';
 
 const CATEGORIES = [
   { icon: '🎮', name: 'Consolas' },
@@ -14,15 +15,26 @@ const CATEGORIES = [
 export default function Home() {
   const { products, showToast } = useStore();
   const [email, setEmail] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
-  const handleSubscribe = e => {
+  const handleSubscribe = async e => {
     e.preventDefault();
-    if (!isAllowedEmail(email.trim())) {
+    if (enviando) return;
+    const correo = email.trim();
+    if (!isAllowedEmail(correo)) {
       showToast('Usa un correo @gmail.com, @duoc.cl o @profesor.duoc.cl');
       return;
     }
-    showToast('¡Gracias por suscribirte!');
-    setEmail('');
+    setEnviando(true);
+    try {
+      await enviarSuscripcion(correo);
+      showToast('¡Gracias por suscribirte!');
+      setEmail('');
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -75,7 +87,9 @@ export default function Home() {
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
-            <button type="submit" className="btn btn-primary">Suscribirme</button>
+            <button type="submit" className="btn btn-primary" disabled={enviando}>
+              {enviando ? 'Enviando…' : 'Suscribirme'}
+            </button>
           </form>
         </div>
       </section>

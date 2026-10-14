@@ -1,21 +1,36 @@
 import { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { isAllowedEmail } from '../lib/validators';
+import { enviarContacto } from '../lib/email';
 
 export default function Contacto() {
   const { showToast } = useStore();
   const [form, setForm] = useState({ nombre: '', email: '', mensaje: '' });
+  const [enviando, setEnviando] = useState(false);
   const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    if (!isAllowedEmail(form.email.trim())) {
+    if (enviando) return;
+    const datos = {
+      nombre: form.nombre.trim(),
+      email: form.email.trim(),
+      mensaje: form.mensaje.trim()
+    };
+    if (!isAllowedEmail(datos.email)) {
       showToast('Usa un correo @gmail.com, @duoc.cl o @profesor.duoc.cl');
       return;
     }
-    // Aquí se puede conectar el envío real (por ejemplo EmailJS).
-    showToast('Mensaje enviado, te responderemos pronto.');
-    setForm({ nombre: '', email: '', mensaje: '' });
+    setEnviando(true);
+    try {
+      await enviarContacto(datos);
+      showToast('Mensaje enviado, te responderemos pronto.');
+      setForm({ nombre: '', email: '', mensaje: '' });
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -31,10 +46,12 @@ export default function Contacto() {
       <section className="products">
         <div className="container">
           <form className="contact-form" onSubmit={handleSubmit}>
-            <input type="text" name="nombre" placeholder="Nombre" required value={form.nombre} onChange={set} />
+            <input type="text" name="nombre" maxLength={50} placeholder="Nombre" required value={form.nombre} onChange={set} />
             <input type="email" name="email" placeholder="Correo" required value={form.email} onChange={set} />
-            <textarea name="mensaje" placeholder="Mensaje" rows="5" required value={form.mensaje} onChange={set} />
-            <button type="submit" className="btn btn-primary">Enviar mensaje</button>
+            <textarea name="mensaje" placeholder="Mensaje" rows="5" maxLength={2000} required value={form.mensaje} onChange={set} />
+            <button type="submit" className="btn btn-primary" disabled={enviando}>
+              {enviando ? 'Enviando…' : 'Enviar mensaje'}
+            </button>
           </form>
         </div>
       </section>

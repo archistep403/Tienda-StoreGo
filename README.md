@@ -101,3 +101,26 @@ src/pages, components  páginas y componentes de React
 - **"MySQL rechazó el usuario o la contraseña"**: revisa `DB_USER` y `DB_PASSWORD` en `.env`.
 - **Error al subir una foto grande**: sube `max_allowed_packet` de MySQL (por ejemplo `SET GLOBAL max_allowed_packet = 16*1024*1024;`). En MySQL 5.7 el valor por defecto es 4 MB.
 - **Las sesiones se cierran al reiniciar la API**: define `JWT_SECRET` en `.env`.
+
+## Contacto y suscripción por correo (EmailJS)
+
+El formulario de **Contacto** y el de **Suscripción** (inicio) envían un correo a `archistep403@gmail.com` con EmailJS (plan gratis: 200 correos al mes).
+
+1. Crea una cuenta en https://www.emailjs.com y en **Email Services** conecta el Gmail desde el que se enviará (copia el *Service ID*).
+2. En **Email Templates** crea una plantilla con estos datos:
+   - **To Email:** `{{to_email}}`  (o escribe directamente `archistep403@gmail.com`)
+   - **Reply To:** `{{reply_to}}`
+   - **Subject:** `{{asunto}}`
+   - **Content:**
+     ```
+     Tipo: {{tipo}}
+     Nombre: {{nombre}}
+     Correo: {{email}}
+
+     {{mensaje}}
+     ```
+   Copia el *Template ID*.
+3. En **Account → General** copia la *Public Key*.
+4. Pon los tres valores en `.env` (`VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, `VITE_EMAILJS_PUBLIC_KEY`) y reinicia `npm run dev`. Si haces `npm run build`, hazlo con el `.env` ya completo.
+
+Si falta alguna clave, el sitio avisa con un mensaje en pantalla en vez de fallar en silencio. En EmailJS, en **Account → Security**, puedes limitar los dominios autorizados para que nadie más use tu clave pública.
